@@ -46,8 +46,51 @@ def clean(filename:str,required_cols:list[str],Policy:MissingPolicy = MissingPol
 def statistics(filename:str):
     df = pd.read_csv(filename)
 
-    
-    
+    #columns
+    features = df.columns.tolist()
+    # print(f'Column names: {features}')
 
+    #row number
+    noofrows = len(df)
+    # print(f'no of rows: {noofrows}')
+
+    #col number
+    noofcols = len(df.columns)
+    # print(f'no of columns: {noofcols}')
+    
+    # duplicates
+    df_nodup = df.drop_duplicates()
+    duplicates = len(df)-len(df_nodup)
+
+    # print(f'no of duplicate rows: {duplicates}')
+
+
+    #data_types 
+    datatypes =df.dtypes.astype('str').to_dict()
+
+    # print(datatypes)
+
+
+    #missing values per col
+
+    missing_values = {}
+    for x in features:
+        missing_values[x] = int(df[x].isna().sum())
+
+
+    # print(missing_values) 
+
+    final_answer = {
+        'row_count': noofrows,
+        'column_count': noofcols,
+        'columns': features,
+        'missing_values_by_column': missing_values,
+        'duplicate_rows': duplicates,
+        'data_types': datatypes
+    }
+
+    return final_answer
+
+statistics('asyncflow_dirty_employees.csv')
 
 
