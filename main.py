@@ -1,35 +1,58 @@
-from fastapi import FastAPI,File,UploadFile
-import csv
-import io
-from enum import Enum
-
-
+from fastapi import FastAPI, File, HTTPException, UploadFile
+from app.services.py.csvprocessor import MissingPolicy, clean, statistics
+import os
+import tempfile
 
 
 app = FastAPI()
 
-@app.get('/')
-async def root():
-    return {"message": "fuck you"}
-
-class MissingPolicy(Enum):
-    PRESERVE  = 'preserve'
-    DROP_ROWS = 'drop_rows' # drop for row if any missing value 
-    DROP_REQUIRED = 'drop_required' # drop row if required values are missing 
-
 
 @app.post('/Job/')
-async def Job(file:UploadFile = File(...), required_columns:list[str] = [], missing_value_policy: MissingPolicy = ['preserve']):
+async def Job(
+    file: UploadFile = File(...),
+    required_columns: list[str] | None = None,
+    missing_value_policy: MissingPolicy = MissingPolicy.PRESERVE,
+    operation: str = 'clean',
+):
+    if file.content_type != 'text/csv':
+        raise HTTPException(
+            status_code=400,
+            detail="Incorrect file type. Please upload a CSV.",
+        )
 
-    if file.content_type != 'text/csv' : 
-        return {"Error" : "Incorrect file type. Please upload a CSV."}
-    
-    contents = await file.read()
-    decoded_contents = contents.decode("utf-8")
+    if operation not in {'clean', 'statistics'}:
+        raise HTTPException(
+            status_code=400,
+            detail="Choose either clean or statistics",
+        )
 
-    csv_reader = csv.DictReader(io.StringIO(decoded_contents))
-    data = list(csv_reader)
+    temporary_file = tempfile.NamedTemporaryFile(
+        mode='wb',
+        suffix='.csv',
+        delete=False,
+    )
 
+    try:
+        contents = await file.read()
+        temporary_file.write(contents)
+        temporary_file.close()
 
-    return {"message" : "CSV processed successfully" , "data": data}    
+        if operation == 'statistics':
+            return statistics(temporary_file.name)
 
+        cleaned_data = clean(
+            temporary_file.name,
+            required_columns or [],
+            missing_value_policy,
+        )
+        return {
+            'operation': 'clean',
+            'data': cleaned_data.to_dict(orient='records'),
+        }
+    except (OSError, ValueError) as error:
+        raise HTTPException(status_code=400, detail=str(error)) from error
+    finally:
+        if not temporary_file.file.closed:
+            temporary_file.close()
+        if os.path.exists(temporary_file.name):
+            os.unlink(temporary_file.name)

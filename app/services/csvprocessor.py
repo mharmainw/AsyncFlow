@@ -1,6 +1,4 @@
-import numpy as np
 import pandas as pd
-import csv
 from enum import Enum
 
 class MissingPolicy(Enum):
@@ -37,7 +35,7 @@ def clean(filename:str,required_cols:list[str],Policy:MissingPolicy = MissingPol
         df = df.dropna(subset= required_cols)
 
     else:
-        print("This Policy Does Not Exist")
+        raise ValueError("No such policy exists")
 
     
 
@@ -91,6 +89,5 @@ def statistics(filename:str):
 
     return final_answer
 
-statistics('asyncflow_dirty_employees.csv')
 
 
