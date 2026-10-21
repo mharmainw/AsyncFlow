@@ -1,18 +1,29 @@
 from fastapi import FastAPI, File, HTTPException, UploadFile
-from app.services.py.csvprocessor import MissingPolicy, clean, statistics
+from app.services.csvprocessor import MissingPolicy, clean, statistics
 import os
 import tempfile
+import pandas as pd
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+import psycopg
+import alembic
 
+import enum
+
+
+class Operation(enum.Enum):
+    CLEAN = 'clean'
+    STATISTICS = 'statistics' 
 
 app = FastAPI()
 
 
-@app.post('/Job/')
+@app.post('/jobs')
 async def Job(
     file: UploadFile = File(...),
     required_columns: list[str] | None = None,
     missing_value_policy: MissingPolicy = MissingPolicy.PRESERVE,
-    operation: str = 'clean',
+    operation:Operation = Operation.CLEAN,
 ):
     if file.content_type != 'text/csv':
         raise HTTPException(
@@ -37,7 +48,7 @@ async def Job(
         temporary_file.write(contents)
         temporary_file.close()
 
-        if operation == 'statistics':
+        if Operation.STATISTICS:
             return statistics(temporary_file.name)
 
         cleaned_data = clean(
@@ -45,6 +56,9 @@ async def Job(
             required_columns or [],
             missing_value_policy,
         )
+        cleaned_data = cleaned_data.astype(object).where(
+        pd.notna(cleaned_data), None
+)
         return {
             'operation': 'clean',
             'data': cleaned_data.to_dict(orient='records'),

@@ -6,6 +6,8 @@ class MissingPolicy(Enum):
     DROP_ROWS = 'drop_rows' # drop for row if any missing value 
     DROP_REQUIRED = 'drop_required' # drop row if required values are missing 
 
+
+
 def clean(filename:str,required_cols:list[str],Policy:MissingPolicy = MissingPolicy.PRESERVE ):
     df = pd.read_csv(filename)
 
