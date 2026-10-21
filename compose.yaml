@@ -9,6 +9,8 @@ services:
       db:
         condition: service_healthy
     command: ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+    volumes:
+      - job_data:/data/jobs
 
   db:
     image: postgres:14.5
@@ -25,8 +27,6 @@ services:
       timeout: 5s
       retries: 10
 
-
-
   adminer:
     image: adminer
     restart: always
@@ -35,3 +35,5 @@ services:
 
 volumes:
   postgres_data:
+
+  job_data:

@@ -7,7 +7,7 @@ class Settings (BaseSettings):
     database_password : str
     database_name : str
     database_username : str
-
+    storage_path: str
     model_config = SettingsConfigDict(env_file=".env")
     
 
