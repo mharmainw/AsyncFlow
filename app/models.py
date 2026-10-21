@@ -9,6 +9,7 @@ import uuid
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy import JSON
 from sqlalchemy import Enum as SQLAlchemyEnum
+from sqlalchemy import String,Integer
 
 
 class Status(Enum):
@@ -28,15 +29,18 @@ class Job(Base):
 
 
     id = Column(UUID(as_uuid=True),primary_key = True,nullable = False,default=uuid.uuid4)
+    input_path= Column(String,nullable = False)
     original_filename = Column(String,nullable = False)
     operation = Column(SQLAlchemyEnum(Operation),nullable = False)
-    status = Column(SQLAlchemyEnum(Status),nullable = False)
+    status = Column(SQLAlchemyEnum(Status),nullable = False,default=Status.QUEUED)
     missing_policy = Column(SQLAlchemyEnum(MissingPolicy))
     required_columns = Column(JSON,nullable = False)
     created_at = Column(TIMESTAMP(timezone=True),nullable = False,server_default=text('now()'))
-    started_at = Column(TIMESTAMP(timezone=True),nullable = False,server_default=text('now()'))
+    started_at = Column(TIMESTAMP(timezone=True),nullable = True)
+    completed_at = Column(TIMESTAMP(timezone=True),nullable= True)
     error_message = Column(String,nullable = True)
     output_path = Column(String,nullable= True)
+    attempt_count = Column(Integer,default= 0 , nullable = False)
     result = Column(JSON,nullable = True)
 
 
