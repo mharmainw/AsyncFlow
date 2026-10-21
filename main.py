@@ -5,7 +5,6 @@ import tempfile
 import pandas as pd
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-import psycopg
 import alembic
 
 import enum
