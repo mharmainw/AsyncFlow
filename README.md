@@ -6,7 +6,7 @@ The project is currently building the first complete vertical slice: accept one 
 
 ## Current progress
 
-Overall vertical-slice progress is approximately **38%**.
+Overall vertical-slice progress is approximately **45%**.
 
 Completed:
 
@@ -19,11 +19,15 @@ Completed:
 - Verified model-to-database schema agreement
 - Docker-managed shared job storage mounted at `/data/jobs`
 - Verified file persistence across web-container recreation and visibility from a second container
+- Redis broker running as a healthy Docker Compose service
+- Celery application configured through the environment
+- Celery worker connected to Redis and verified with an inspection ping
+- Verified worker access to the shared `/data/jobs` volume
 
 In progress or remaining:
 
 - Durable job creation through the API
-- Redis broker and Celery worker
+- Celery task implementation and registration
 - Queued, processing, completed, and failed state transitions
 - Job status and result-download endpoints
 - Failure handling and retry behavior
@@ -37,9 +41,11 @@ In progress or remaining:
 - **Alembic** owns database schema migrations.
 - **Psycopg 3** is the PostgreSQL driver used by both the application and Alembic.
 - **Pandas** implements CSV cleaning and statistics operations.
-- **Docker Compose** currently runs the API, PostgreSQL, and Adminer and manages the persistent `job_data` volume.
+- **Redis** brokers background-task messages between the API and worker.
+- **Celery** runs the background worker that will process queued jobs.
+- **Docker Compose** runs the API, PostgreSQL, Redis, Celery worker, and Adminer, and manages the persistent `job_data` volume.
 
-Redis and Celery will be added in the next stages. CSV processing is not asynchronous yet.
+The broker and worker infrastructure is operational, but no CSV-processing task is registered yet. CSV processing is not asynchronous yet.
 
 ## Local setup
 
@@ -52,6 +58,7 @@ DATABASE_USERNAME=postgres
 DATABASE_PASSWORD=your-local-password
 DATABASE_NAME=postgres
 STORAGE_PATH=/data/jobs
+CELERY_BROKER_URL=redis://redis:6379/0
 ```
 
 Do not commit `.env`.
@@ -95,7 +102,7 @@ Before applying a generated migration:
 
 - The API still processes CSV operations within the request cycle.
 - Jobs are not yet created or persisted through the upload endpoint.
-- Redis and Celery are not configured.
+- The Celery worker is operational but has no registered CSV-processing task yet.
 - The shared volume is ready, but the API and future worker do not yet write job input and result files to it.
 - Status, history, download, and retry endpoints are not implemented.
 - Automated test coverage is not yet established.

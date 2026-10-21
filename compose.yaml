@@ -33,6 +33,37 @@ services:
     ports:
       - "8080:8080"
 
+  redis:
+    image: redis:7-alpine
+    restart: always
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+
+  worker:
+    build: . #to use your projects dockerfile
+    env_file:
+      - .env
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+    command: [
+      "celery",
+      "-A",
+      "app.celery_app:celery_app",
+      "worker",
+      "--loglevel=info",    # this whole commands starts a celery worker and loads the object from app/celery_app.py
+    ]
+
+    volumes:
+      - job_data:/data/jobs
+
 volumes:
   postgres_data:
 

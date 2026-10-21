@@ -8,6 +8,7 @@ class Settings (BaseSettings):
     database_name : str
     database_username : str
     storage_path: str
+    celery_broker_url:str
     model_config = SettingsConfigDict(env_file=".env")
     
 
