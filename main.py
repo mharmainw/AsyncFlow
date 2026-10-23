@@ -4,14 +4,13 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from fastapi import Depends, FastAPI, File, HTTPException, UploadFile
-from fastapi.responses import FileResponse, JSONResponse
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
 from app.config import settings
 from app.database import get_db
 from app.models import Job, Operation, Status
-from app.schemas import JobOut, JobStatusOut
+from app.schemas import JobOut
 from app.services.csvprocessor import MissingPolicy
 from app.tasks import process_job
 
@@ -97,43 +96,3 @@ async def create_job(
         ) from error
 
     return job
-
-
-@app.get("/jobs/{job_id}", response_model=JobStatusOut)
-def get_job(job_id: uuid.UUID, db: Session = Depends(get_db)):
-    job = db.get(Job, job_id)
-
-    if job is None:
-        raise HTTPException(status_code=404, detail="Job not found")
-
-    return job
-
-
-@app.get("/jobs/{job_id}/result")
-def get_job_result(job_id: uuid.UUID, db: Session = Depends(get_db)):
-    job = db.get(Job, job_id)
-
-    if job is None:
-        raise HTTPException(status_code=404, detail="Job not found")
-
-    if job.status != Status.COMPLETED:
-        raise HTTPException(
-            status_code=409,
-            detail=f"Job result is not available while status is {job.status.value}",
-        )
-
-    if job.operation == Operation.STATISTICS:
-        return JSONResponse(content=job.result or {})
-
-    if not job.output_path:
-        raise HTTPException(status_code=404, detail="Job result was not found")
-
-    output_path = Path(job.output_path)
-    if not output_path.is_file():
-        raise HTTPException(status_code=404, detail="Job result was not found")
-
-    return FileResponse(
-        output_path,
-        media_type="text/csv",
-        filename=f"processed_{job.original_filename}",
-    )
