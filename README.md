@@ -6,7 +6,7 @@ The project is currently building the first complete vertical slice: accept one 
 
 ## Current progress
 
-Overall vertical-slice progress is approximately **45%**.
+Overall vertical-slice progress is approximately **56%**.
 
 Completed:
 
@@ -23,11 +23,15 @@ Completed:
 - Celery application configured through the environment
 - Celery worker connected to Redis and verified with an inspection ping
 - Verified worker access to the shared `/data/jobs` volume
+- Registered `app.tasks.process_job` with the Celery worker
+- Verified delivery of a job UUID through Redis to the worker
+- Verified worker-owned PostgreSQL session creation and job lookup
+- Verified the durable `queued` to `processing` transition, UTC start time, and attempt count
 
 In progress or remaining:
 
 - Durable job creation through the API
-- Celery task implementation and registration
+- CSV operation execution inside the Celery task
 - Queued, processing, completed, and failed state transitions
 - Job status and result-download endpoints
 - Failure handling and retry behavior
@@ -45,7 +49,7 @@ In progress or remaining:
 - **Celery** runs the background worker that will process queued jobs.
 - **Docker Compose** runs the API, PostgreSQL, Redis, Celery worker, and Adminer, and manages the persistent `job_data` volume.
 
-The broker and worker infrastructure is operational, but no CSV-processing task is registered yet. CSV processing is not asynchronous yet.
+The broker, worker, and initial job task are operational. The task can load a persisted job and mark it as processing, but CSV processing is not asynchronous yet.
 
 ## Local setup
 
@@ -102,7 +106,7 @@ Before applying a generated migration:
 
 - The API still processes CSV operations within the request cycle.
 - Jobs are not yet created or persisted through the upload endpoint.
-- The Celery worker is operational but has no registered CSV-processing task yet.
+- The Celery task currently stops after marking a job as processing; it does not yet execute a CSV operation or record completion and failure states.
 - The shared volume is ready, but the API and future worker do not yet write job input and result files to it.
 - Status, history, download, and retry endpoints are not implemented.
 - Automated test coverage is not yet established.
