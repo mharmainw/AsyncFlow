@@ -64,6 +64,24 @@ services:
     volumes:
       - job_data:/data/jobs
 
+  integration-test:
+    build: .
+    profiles:
+      - test
+    env_file:
+      - .env
+    environment:
+      ASYNCFLOW_API_URL: http://web:8000
+    depends_on:
+      web:
+        condition: service_started
+      worker:
+        condition: service_started
+    command:
+      - sh
+      - -c
+      - alembic upgrade head && pytest tests/test_vertical_slice.py -q
+
 volumes:
   postgres_data:
 

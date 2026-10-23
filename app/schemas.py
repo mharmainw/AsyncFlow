@@ -12,3 +12,12 @@ class JobOut(BaseModel):
     status: Status
     operation: Operation
     created_at: datetime
+
+
+class JobStatusOut(JobOut):
+    original_filename: str
+    started_at: datetime | None
+    completed_at: datetime | None
+    error_message: str | None
+    attempt_count: int
+    

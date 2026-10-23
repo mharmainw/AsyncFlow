@@ -8,3 +8,5 @@ psycopg[binary]
 alembic
 pydantic-settings
 celery[redis]
+httpx
+pytest
