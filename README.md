@@ -6,7 +6,7 @@ The project is currently building the first complete vertical slice: accept one 
 
 ## Current progress
 
-Overall vertical-slice progress is approximately **56%**.
+Overall vertical-slice progress is approximately **65%**.
 
 Completed:
 
@@ -27,14 +27,16 @@ Completed:
 - Verified delivery of a job UUID through Redis to the worker
 - Verified worker-owned PostgreSQL session creation and job lookup
 - Verified the durable `queued` to `processing` transition, UTC start time, and attempt count
+- Celery task executes both clean and statistics operations
+- Clean jobs write `output.csv` beside their persisted input file
+- Statistics jobs store their JSON result in PostgreSQL
+- Verified successful `processing` to `completed` transitions and completion timestamps
 
 In progress or remaining:
 
 - Durable job creation through the API
-- CSV operation execution inside the Celery task
-- Queued, processing, completed, and failed state transitions
+- Failed-state persistence and retry behavior
 - Job status and result-download endpoints
-- Failure handling and retry behavior
 - End-to-end integration testing
 
 ## Current architecture
@@ -49,7 +51,7 @@ In progress or remaining:
 - **Celery** runs the background worker that will process queued jobs.
 - **Docker Compose** runs the API, PostgreSQL, Redis, Celery worker, and Adminer, and manages the persistent `job_data` volume.
 
-The broker, worker, and initial job task are operational. The task can load a persisted job and mark it as processing, but CSV processing is not asynchronous yet.
+The broker, worker, and job task are operational. The worker can execute clean and statistics operations and persist successful completion data, but the API does not enqueue uploaded jobs yet.
 
 ## Local setup
 
@@ -106,7 +108,7 @@ Before applying a generated migration:
 
 - The API still processes CSV operations within the request cycle.
 - Jobs are not yet created or persisted through the upload endpoint.
-- The Celery task currently stops after marking a job as processing; it does not yet execute a CSV operation or record completion and failure states.
+- Successful Celery tasks complete correctly, but an exception does not yet persist the job's `failed` state and error message.
 - The shared volume is ready, but the API and future worker do not yet write job input and result files to it.
 - Status, history, download, and retry endpoints are not implemented.
 - Automated test coverage is not yet established.
