@@ -2,11 +2,11 @@
 
 AsyncFlow is a backend engineering project for processing uploaded CSV files as durable background jobs. The target architecture uses FastAPI, PostgreSQL, Redis, Celery, Pandas, and Docker Compose.
 
-The project is currently building the first complete vertical slice: accept one CSV, persist a queued job, process it in a worker, track its lifecycle, and expose the result for download.
+The first complete vertical slice is operational: accept one CSV, persist a queued job, process it in a worker, track its lifecycle, and expose the result for download.
 
 ## Current progress
 
-Overall vertical-slice progress is approximately **80%**.
+The first vertical slice is **100% complete**. Progress against the complete project plan is approximately **55%**.
 
 Completed:
 
@@ -35,12 +35,17 @@ Completed:
 - `POST /jobs` saves uploads in per-job shared-storage directories
 - The API commits queued jobs before publishing their UUIDs to Celery
 - Verified HTTP 202 upload through Redis, the real worker, PostgreSQL, and generated output storage
+- `GET /jobs/{job_id}` exposes the durable job status and lifecycle timestamps
+- `GET /jobs/{job_id}/result` downloads cleaned CSV output or returns statistics JSON
+- A Docker Compose integration test verifies upload, asynchronous processing, status polling, and download through public HTTP endpoints
 
 In progress or remaining:
 
-- Retry behavior
-- Job status and result-download endpoints
-- End-to-end integration testing
+- Job history and status filtering
+- Safe retry behavior
+- Delivery recovery and duplicate-delivery safeguards
+- Broader unit and API test coverage
+- Continuous integration
 
 ## Current architecture
 
@@ -94,6 +99,14 @@ docker compose exec web alembic check
 
 FastAPI documentation is available at `http://localhost/docs`. Adminer is available at `http://localhost:8080`.
 
+Run the complete vertical-slice integration test through Docker Compose:
+
+```bash
+docker compose --profile test up --build --abort-on-container-exit --exit-code-from integration-test integration-test
+```
+
+The test runs migrations and verifies the public workflow through the API. It does not access PostgreSQL or invoke the worker directly.
+
 ## Migration workflow
 
 Migration revision files must be generated in a persistent project directory and committed with the corresponding model changes. Do not generate a revision only inside an unmounted running container because the file will disappear when that container is recreated.
@@ -110,7 +123,7 @@ Before applying a generated migration:
 ## Current limitations
 
 - Failed tasks are recorded durably, but automatic retry behavior is not implemented.
-- Status, history, download, and retry endpoints are not implemented.
-- Automated test coverage is not yet established.
+- History, filtering, and retry endpoints are not implemented.
+- Automated coverage currently contains one end-to-end integration test; focused unit and API tests still need to be added.
 
 These limitations are intentional at the current checkpoint and will be removed incrementally as the vertical slice is completed.
