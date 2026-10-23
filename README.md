@@ -6,7 +6,7 @@ The project is currently building the first complete vertical slice: accept one 
 
 ## Current progress
 
-Overall vertical-slice progress is approximately **70%**.
+Overall vertical-slice progress is approximately **80%**.
 
 Completed:
 
@@ -32,10 +32,12 @@ Completed:
 - Statistics jobs store their JSON result in PostgreSQL
 - Verified successful `processing` to `completed` transitions and completion timestamps
 - Failed tasks persist `failed`, an error message, and a completion timestamp before re-raising to Celery
+- `POST /jobs` saves uploads in per-job shared-storage directories
+- The API commits queued jobs before publishing their UUIDs to Celery
+- Verified HTTP 202 upload through Redis, the real worker, PostgreSQL, and generated output storage
 
 In progress or remaining:
 
-- Durable job creation through the API
 - Retry behavior
 - Job status and result-download endpoints
 - End-to-end integration testing
@@ -52,7 +54,7 @@ In progress or remaining:
 - **Celery** runs the background worker that will process queued jobs.
 - **Docker Compose** runs the API, PostgreSQL, Redis, Celery worker, and Adminer, and manages the persistent `job_data` volume.
 
-The broker, worker, and job task are operational. The worker can execute clean and statistics operations and persist both successful and failed outcomes, but the API does not enqueue uploaded jobs yet.
+The upload API, broker, worker, and job task are operational. Uploaded jobs are persisted, queued, processed asynchronously, and recorded as completed or failed.
 
 ## Local setup
 
@@ -107,10 +109,7 @@ Before applying a generated migration:
 
 ## Current limitations
 
-- The API still processes CSV operations within the request cycle.
-- Jobs are not yet created or persisted through the upload endpoint.
 - Failed tasks are recorded durably, but automatic retry behavior is not implemented.
-- The shared volume is ready, but the API and future worker do not yet write job input and result files to it.
 - Status, history, download, and retry endpoints are not implemented.
 - Automated test coverage is not yet established.
 
