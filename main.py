@@ -13,6 +13,7 @@ from app.schemas import JobOut, JobStatusOut
 from app.services.csvprocessor import MissingPolicy
 from app.tasks import process_job
 from fastapi.responses import FileResponse
+from sqlalchemy import select
 
 app = FastAPI()
 
@@ -136,3 +137,12 @@ def result(job_id: uuid.UUID,db: Session = Depends(get_db)):
         media_type= "text/csv",
         filename = f"processed_{job.original_filename}"
     )
+
+
+@app.get('/jobs',response_model = list[JobStatusOut])
+def jobs(db: Session = Depends(get_db), status: Status | None = None):
+
+    statement = select(Job).order_by(Job.created_at.desc())
+    if status is not None:
+        statement = statement.where(Job.status == status)
+    return db.scalars(statement).all()

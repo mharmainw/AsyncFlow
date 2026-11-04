@@ -24,7 +24,7 @@ def wait_for_api(client: httpx.Client):
     raise AssertionError("AsyncFlow API did not become ready within 30 seconds")
 
 
-def test_uploaded_csv_is_processed_and_downloadable():
+def test_uploaded_csv_is_processed_downloadable_and_visible_in_history():
     with httpx.Client(base_url=API_URL, timeout=10.0) as client:
         wait_for_api(client)
 
@@ -72,3 +72,13 @@ def test_uploaded_csv_is_processed_and_downloadable():
             {"name": "Alice", "age": "30"},
             {"name": "Bob", "age": "40"},
         ]
+
+        history_response = client.get("/jobs")
+        assert history_response.status_code == 200
+        assert job_id in {job["id"] for job in history_response.json()}
+
+        completed_response = client.get("/jobs", params={"status": "completed"})
+        assert completed_response.status_code == 200
+        completed_jobs = completed_response.json()
+        assert job_id in {job["id"] for job in completed_jobs}
+        assert all(job["status"] == "completed" for job in completed_jobs)

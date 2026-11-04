@@ -6,7 +6,7 @@ The first complete vertical slice is operational: accept one CSV, persist a queu
 
 ## Current progress
 
-The first vertical slice is **100% complete**. Progress against the complete project plan is approximately **55%**.
+The first vertical slice is **100% complete**. Progress against the complete project plan is approximately **60%**.
 
 Completed:
 
@@ -37,11 +37,11 @@ Completed:
 - Verified HTTP 202 upload through Redis, the real worker, PostgreSQL, and generated output storage
 - `GET /jobs/{job_id}` exposes durable job status and lifecycle information
 - `GET /jobs/{job_id}/result` downloads cleaned CSV output or returns statistics JSON
+- `GET /jobs` lists jobs newest first and supports filtering by lifecycle status
 - A Docker Compose integration test verifies upload, asynchronous processing, status polling, and download through public HTTP endpoints
 
 In progress or remaining:
 
-- Job history and status filtering
 - Safe retry behavior
 - Delivery recovery and duplicate-delivery safeguards
 - Broader unit and API test coverage
@@ -123,7 +123,7 @@ Before applying a generated migration:
 ## Current limitations
 
 - Failed tasks are recorded durably, but automatic retry behavior is not implemented.
-- History, filtering, and retry endpoints are not implemented.
+- The retry endpoint is not implemented.
 - Automated coverage currently contains one end-to-end integration test; focused unit and API tests still need to be added.
 
 These limitations are intentional at the current checkpoint and will be removed incrementally as the vertical slice is completed.
